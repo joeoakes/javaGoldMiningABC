@@ -1,6 +1,13 @@
 import java.util.Arrays;
 import java.util.Random;
 
+/*
+Each solution represents a potential allocation of mining intensity across different gold sources.
+The fitness of each solution is evaluated as the total gold yield obtained from all sources.
+Stagnant solutions (those with the same fitness value for a certain number of iterations) are replaced with new random solutions.
+During each iteration, the employed bees phase introduces small random changes to the mining intensity at a randomly selected source.
+ */
+
 public class GoldMiningABC {
     private static final int NUM_GOLD_SOURCES = 15;
     private static final int POPULATION_SIZE = 20;
