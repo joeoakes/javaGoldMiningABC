@@ -5,6 +5,7 @@ public class GoldMiningABC {
     private static final int NUM_GOLD_SOURCES = 15;
     private static final int POPULATION_SIZE = 20;
     private static final int MAX_ITERATIONS = 100;
+    private static final int ABANDONMENT_THRESHOLD = 10;
 
     private double[] goldYields;
     private double[][] solutions;
@@ -22,8 +23,7 @@ public class GoldMiningABC {
     private double[] generateGoldYields() {
         double[] yields = new double[NUM_GOLD_SOURCES];
         for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
-            // Generate random yields for each gold source
-            yields[i] = random.nextDouble() * 100; // Example: Yield between 0 and 100
+            yields[i] = random.nextDouble() * 100; // Random gold yield between 0 and 100
         }
         return yields;
     }
@@ -37,8 +37,7 @@ public class GoldMiningABC {
     private double[] generateRandomSolution() {
         double[] solution = new double[NUM_GOLD_SOURCES];
         for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
-            // Generate random decision variables (mining levels) for each gold source
-            solution[i] = random.nextDouble(); // Example: Mining level between 0 and 1
+            solution[i] = random.nextDouble(); // Random mining intensity between 0 and 1
         }
         return solution;
     }
@@ -46,72 +45,48 @@ public class GoldMiningABC {
     private double evaluateSolution(double[] solution) {
         double totalYield = 0;
         for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
-            // Calculate total yield based on mining levels and gold yields
-            totalYield += solution[i] * goldYields[i];
+            totalYield += solution[i] * goldYields[i]; // Total gold yield from all sources
         }
         return totalYield;
     }
 
     private void evaluatePopulation() {
         for (int i = 0; i < POPULATION_SIZE; i++) {
-            fitnessValues[i] = evaluateSolution(solutions[i]);
+            fitnessValues[i] = evaluateSolution(solutions[i]); // Evaluate fitness of each solution
         }
     }
 
     private void runAlgorithm() {
         initializePopulation();
         for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
-            evaluatePopulation();
+            evaluatePopulation(); // Evaluate fitness of current solutions
+            Arrays.sort(fitnessValues); // Sort solutions by fitness
 
-            // Sort solutions by fitness
-            sortSolutionsByFitness();
+            // Check for stagnation and abandon solutions
+            for (int i = 1; i < POPULATION_SIZE; i++) {
+                if (fitnessValues[i] == fitnessValues[i - 1]) {
+                    if (i >= ABANDONMENT_THRESHOLD) {
+                        solutions[i] = generateRandomSolution(); // Replace stagnant solution
+                    }
+                }
+            }
 
             // Employed bees phase (local search)
-            // For simplicity, we'll skip this phase in this example
-
-            // Onlooker bees phase (neighbor exploration)
-            // For simplicity, we'll skip this phase in this example
-
-            // Scout bees phase (re-initialization)
-            // For simplicity, we'll re-initialize all solutions
-            reinitializeSolutions();
+            for (int i = 0; i < POPULATION_SIZE; i++) {
+                int sourceIndex = random.nextInt(NUM_GOLD_SOURCES);
+                double oldValue = solutions[i][sourceIndex];
+                double newValue = oldValue + (random.nextDouble() - 0.5); // Random small change
+                newValue = Math.max(0, Math.min(1, newValue)); // Ensure newValue is within [0, 1]
+                solutions[i][sourceIndex] = newValue; // Update solution
+            }
         }
 
         // Print the best solution
+        double bestFitness = fitnessValues[POPULATION_SIZE - 1];
+        int index = Arrays.binarySearch(fitnessValues, bestFitness);
         System.out.println("Best solution:");
-        printSolution(solutions[0]);
-        System.out.println("Total yield: " + fitnessValues[0]);
-    }
-
-    private void sortSolutionsByFitness() {
-        // Sort solutions based on fitness values
-        for (int i = 0; i < POPULATION_SIZE; i++) {
-            for (int j = i + 1; j < POPULATION_SIZE; j++) {
-                if (fitnessValues[i] < fitnessValues[j]) {
-                    double tempFitness = fitnessValues[i];
-                    fitnessValues[i] = fitnessValues[j];
-                    fitnessValues[j] = tempFitness;
-
-                    double[] tempSolution = solutions[i];
-                    solutions[i] = solutions[j];
-                    solutions[j] = tempSolution;
-                }
-            }
-        }
-    }
-
-    private void reinitializeSolutions() {
-        // Re-initialize solutions (scout bees phase)
-        for (int i = 0; i < POPULATION_SIZE; i++) {
-            solutions[i] = generateRandomSolution();
-        }
-    }
-
-    private void printSolution(double[] solution) {
-        // Print solution (mining levels for each gold source)
-        for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
-            System.out.println("Gold source " + (i + 1) + ": Mining level " + solution[i]);
-        }
+        System.out.println(Arrays.toString(solutions[index]));
+        System.out.println("Total yield: " + bestFitness);
     }
 
     public static void main(String[] args) {
