@@ -5,16 +5,18 @@ public class GoldMiningABC {
     private static final int NUM_GOLD_SOURCES = 15;
     private static final int POPULATION_SIZE = 20;
     private static final int MAX_ITERATIONS = 100;
-    private static final double ABANDONMENT_THRESHOLD = 10; // Stagnation threshold
 
     private double[] goldYields;
     private double[][] solutions;
+    private double[] fitnessValues;
     private Random random;
 
     public GoldMiningABC() {
+        this.random = new Random();
         this.goldYields = generateGoldYields();
         this.solutions = new double[POPULATION_SIZE][NUM_GOLD_SOURCES];
-        this.random = new Random();
+        this.fitnessValues = new double[POPULATION_SIZE];
+
     }
 
     private double[] generateGoldYields() {
@@ -50,32 +52,19 @@ public class GoldMiningABC {
         return totalYield;
     }
 
+    private void evaluatePopulation() {
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            fitnessValues[i] = evaluateSolution(solutions[i]);
+        }
+    }
+
     private void runAlgorithm() {
         initializePopulation();
-        double[] fitnessValues = new double[POPULATION_SIZE];
-        int[] iterationsSinceImprovement = new int[POPULATION_SIZE];
-
         for (int iter = 0; iter < MAX_ITERATIONS; iter++) {
-            // Evaluate fitness for each solution
-            for (int i = 0; i < POPULATION_SIZE; i++) {
-                fitnessValues[i] = evaluateSolution(solutions[i]);
-            }
+            evaluatePopulation();
 
             // Sort solutions by fitness
-            Arrays.sort(solutions, (a, b) -> Double.compare(evaluateSolution(b), evaluateSolution(a)));
-
-            // Check for stagnation and abandon solutions
-            for (int i = 0; i < POPULATION_SIZE; i++) {
-                if (i > 0 && fitnessValues[i] == fitnessValues[i - 1]) {
-                    iterationsSinceImprovement[i]++;
-                } else {
-                    iterationsSinceImprovement[i] = 0;
-                }
-                if (iterationsSinceImprovement[i] >= ABANDONMENT_THRESHOLD) {
-                    solutions[i] = generateRandomSolution(); // Abandon and replace with new solution
-                    iterationsSinceImprovement[i] = 0;
-                }
-            }
+            sortSolutionsByFitness();
 
             // Employed bees phase (local search)
             // For simplicity, we'll skip this phase in this example
@@ -83,16 +72,46 @@ public class GoldMiningABC {
             // Onlooker bees phase (neighbor exploration)
             // For simplicity, we'll skip this phase in this example
 
-            // Scout bees phase (re-initialization of abandoned solutions)
-            // This is already handled in the stagnation check above
+            // Scout bees phase (re-initialization)
+            // For simplicity, we'll re-initialize all solutions
+            reinitializeSolutions();
         }
 
         // Print the best solution
         System.out.println("Best solution:");
-        for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
-            System.out.println("Gold source " + (i + 1) + ": Mining level " + solutions[0][i]);
+        printSolution(solutions[0]);
+        System.out.println("Total yield: " + fitnessValues[0]);
+    }
+
+    private void sortSolutionsByFitness() {
+        // Sort solutions based on fitness values
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            for (int j = i + 1; j < POPULATION_SIZE; j++) {
+                if (fitnessValues[i] < fitnessValues[j]) {
+                    double tempFitness = fitnessValues[i];
+                    fitnessValues[i] = fitnessValues[j];
+                    fitnessValues[j] = tempFitness;
+
+                    double[] tempSolution = solutions[i];
+                    solutions[i] = solutions[j];
+                    solutions[j] = tempSolution;
+                }
+            }
         }
-        System.out.println("Total yield: " + evaluateSolution(solutions[0]));
+    }
+
+    private void reinitializeSolutions() {
+        // Re-initialize solutions (scout bees phase)
+        for (int i = 0; i < POPULATION_SIZE; i++) {
+            solutions[i] = generateRandomSolution();
+        }
+    }
+
+    private void printSolution(double[] solution) {
+        // Print solution (mining levels for each gold source)
+        for (int i = 0; i < NUM_GOLD_SOURCES; i++) {
+            System.out.println("Gold source " + (i + 1) + ": Mining level " + solution[i]);
+        }
     }
 
     public static void main(String[] args) {
@@ -100,4 +119,3 @@ public class GoldMiningABC {
         abc.runAlgorithm();
     }
 }
-
