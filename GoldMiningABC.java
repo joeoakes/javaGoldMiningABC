@@ -6,22 +6,32 @@ Each solution represents a potential allocation of mining intensity across diffe
 The fitness of each solution is evaluated as the total gold yield obtained from all sources.
 Stagnant solutions (those with the same fitness value for a certain number of iterations) are replaced with new random solutions.
 During each iteration, the employed bees phase introduces small random changes to the mining intensity at a randomly selected source.
+
+POPULATION_SIZE
+a larger population size may increase the likelihood of finding a better solution, but it also requires more computational resources.
+Conversely, a smaller population size may reduce computational costs but may lead to a less thorough exploration of the solution space
+and potentially suboptimal solutions.
+
+MAX_ITERATIONS
+During each iteration, the algorithm explores the solution space by adjusting the parameters of the candidate solutions (employed bees),
+such as the intensity of mining at different gold sources in the case of gold mining optimization.
+A larger value allows for more exploration of the solution space but may increase the computational cost.
  */
 
 public class GoldMiningABC {
     private static final int NUM_GOLD_SOURCES = 15;
-    private static final int POPULATION_SIZE = 20;
+    private static final int POPULATION_SIZE = 20; //represents the number of solutions (employed miners) in each iteration of the algorithm
     private static final int MAX_ITERATIONS = 100;
     private static final int ABANDONMENT_THRESHOLD = 10;
 
-    private double[] goldYields;
+    private double[] goldYields = {11.038460038447706, 27.841727104299764, 48.56526934093153, 35.881140888430416, 8.297921532346496, 85.31585022688503, 21.6228997068595, 2.308778611010165, 54.909568588479765, 15.671227468859616, 20.445639493545098, 12.97782236345143, 96.84637504676179, 3.5486026693377193, 84.69285190713865};
     private double[][] solutions;
     private double[] fitnessValues;
     private Random random;
 
     public GoldMiningABC() {
         this.random = new Random();
-        this.goldYields = generateGoldYields();
+        //this.goldYields = generateGoldYields();
         this.solutions = new double[POPULATION_SIZE][NUM_GOLD_SOURCES];
         this.fitnessValues = new double[POPULATION_SIZE];
 
@@ -89,6 +99,10 @@ public class GoldMiningABC {
         }
 
         // Print the best solution
+        /*
+        Higher fitness values typically indicate better solutions. For example,
+        in gold mining, a higher fitness value would indicate a higher total yield of gold.
+         */
         double bestFitness = fitnessValues[POPULATION_SIZE - 1];
         int index = Arrays.binarySearch(fitnessValues, bestFitness);
         System.out.println("Best solution:");
